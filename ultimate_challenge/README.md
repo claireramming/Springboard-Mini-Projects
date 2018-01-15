@@ -6,10 +6,10 @@ _Aggregate these login counts based on 15 ­minute time intervals, and visualize
 
 The data was read in via `logins = pd.read_json('logins.json')`  
 Aggregation was done with: `logins.resample('15T', on='login_time').count()`:  
-![login_15.head()](#15aggimg)  
+![login_15.head()](https://raw.githubusercontent.com/claireramming/Springboard-Mini-Projects/master/ultimate_challenge/imgs/15aggimg.png)  
 I then checked for missing data, if there are missing time blocks they should show as NaN. `login_15[login_15.login_count.isnull()]` which yielded no results.  
 Next I looked at the daily login counts. January 1st, 1970 is a Thursday, so expanding that out, the peaks in logins tend to come on the weekends and are lowest on Mondays. The low first day is due to the data starting at 8pm on January 1st.  
-![Daily Logins](#dailylogins)  
+![Daily Logins](https://raw.githubusercontent.com/claireramming/Springboard-Mini-Projects/master/ultimate_challenge/imgs/dailylogins.png)  
 The day with the highest login count (4/4/1970, which is a Saturday) also takes up 7 of the 10 highest login count intervals. The top interval (3/1/1970 at 4:30am) is on a Thursday. `login_15.sort_values('login_count', ascending=False).head(10)`
 
 	                     login_count    
@@ -26,10 +26,10 @@ The day with the highest login count (4/4/1970, which is a Saturday) also takes 
     1970-03-13 22:15:00           55
 
 Next I wanted to find the daily trends, so I pulled the time, month and day of month into their own columns, and plotted each day on top of eachother.  
-![Daily Cycle of Logins](#dailycycle)
+![Daily Cycle of Logins](https://raw.githubusercontent.com/claireramming/Springboard-Mini-Projects/master/ultimate_challenge/imgs/dailycycle.png)
 
-There is a clear login peak around noon and another leading up to midnight. There is also somewhat of an early morning peak, maybe this is where weekends get ahead in login counts. I decided to confirm this by aggregating the data into 3 hour chunks and plotting the 3am-6am chuck by day. I only chose to plot one month here, but you can clearly see 2-day peaks that correspond with weekends.  
-![Early Morning Logins](#earlylogins)
+There is a clear login peak around noon and another leading up to midnight. There is also somewhat of an early morning peak, maybe this is where weekends get ahead in login counts. I decided to confirm this by aggregating the data into 3 hour chunks and plotting the 3am-6am chuck by day. I only chose to plot one month here, but you can clearly see 2-day peaks that correspond with weekends (recall Jan 1st was a thursday, so Jan 3/4 are weekends).  
+![Early Morning Logins](https://raw.githubusercontent.com/claireramming/Springboard-Mini-Projects/master/ultimate_challenge/imgs/earlylogins.png)
 
 ### Part 2 - Experiment and Metrics Design
 
@@ -86,7 +86,7 @@ I loaded the data with json:
 	dtypes: bool(1), float64(6), int64(1), object(4)
 	memory usage: 4.2+ MB
 	
-Looks likere there are null values in 3 of the columns. We will look at those a bit later. For now let's get a classification column. I updated the last_trip_date column to be a datetime object and found the most recent date in the column then subtracted thirty days from it and called it _lastday_. A rider is considered retained if they had a ride after lastday. 
+From the infoo output, we can see there are null values in 3 of the columns. We will look at those a bit later. For now let's get a classification column. I updated the last_trip_date column to be a datetime object and found the most recent date in the column then subtracted thirty days from it and called it _lastday_. A rider is considered retained if they had a ride after lastday. 
 	
 	lastday = riders.last_trip_date.max() - pd.Timedelta('30 days')
 	riders['retained'] = riders.last_trip_date > lastday
@@ -95,27 +95,46 @@ We can then get our retention rate with `len(riders[riders.retained == True])/le
 
 I also changed the sign up date column to just contain the day of signup, since they all signed up during the month of January. 
 
-For the `avg_rating_(by/of)_driver` columns, I felt it appropriate to set the nulls to 0, since the lowest rating you can give is 1, so setting them to 0 is a good way of keeping them in the data set but still seperating them from the actual ratings. 
+Since this is a classification problem, I plotted the categorical features as bar plots, and numerical features as violin plots. I prefer violin plots over boxplots as they give a better sense of distribution.
 
-I decided to go with a Random Forest Classifier for my model. Random Forest gives you a sense of the most important features in your model and should do better than logistic regression since our features aren't strongly correlated to our 'retained' data.
+I was most interested in the city and phone breakdowns. King's Landing was the only city that had a higher count of retained users than non-retained. On the phone breakdown, iphone and android users both had a higher non-retained count, but the ratio was much higher for android users. I did not include the nulls in my visual analysis since they could represent numerous things and I don't want to make incorrect assumptions. 
+
+![city breakdown](https://raw.githubusercontent.com/claireramming/Springboard-Mini-Projects/master/ultimate_challenge/imgs/city.png)
+![phone breakdown](https://raw.githubusercontent.com/claireramming/Springboard-Mini-Projects/master/ultimate_challenge/imgs/phone.png)
+
+For the `avg_rating_(by/of)_driver` columns, I felt it appropriate to set the nulls to 0, since the lowest rating a driver or rider can give is 1, so setting them to 0 is a good way of keeping them in the data set but still seperating them from the actual ratings. Riders are more likely not to give a rating than drivers, especially if they are not retained. Retained riders seem to have more <4.5 ratings than non-retained, but this is most likely due to retained riders being more likely to take more than 2 rides in their first 30 days, leading to a greater chance of being rated multiple times and potentially getting a few 3's or 4's to lower their score from a 5. 
+
+![rating of driver](https://raw.githubusercontent.com/claireramming/Springboard-Mini-Projects/master/ultimate_challenge/imgs/rating_of_driver.png)
+![rating by driver](https://raw.githubusercontent.com/claireramming/Springboard-Mini-Projects/master/ultimate_challenge/imgs/rating_by_driver.png)
+![rides in first 30 days](https://raw.githubusercontent.com/claireramming/Springboard-Mini-Projects/master/ultimate_challenge/imgs/ridesinfirst30days.png)
+
+I decided to go with a Random Forest Classifier for my model. Random Forest gives a sense of the most important features in the model and should do better than logistic regression since our features aren't strongly correlated to our 'retained' data.
 
 I got dummy variables for the categorical features city and phone. I dropped a city for the city metric, but did not drop any columns for phone since a 0 in both columns can represent our null values without introducing NaNs. 
 
-With no other feature modification, I ran a test of random forest and got a ~.766 accuracy score. I then looked at the most important features (using the 'feature_importances_' attribute from sklearn) and found that the top three features were Avg Distance, Average rating by driver, and weekday percentage. I decided to focus on modifying these features
-Average rating by driver was particularly heavy in the 4.7-5 range, so I decided to cube that metric to give it some breathing room. That seemed to increase the accuracy by .1 to ~.777. I attempted to do a similar method with avgerage distance, taking the log instead since it leaned toward the lower end. Taking the log did not seem to help model performance, the accuracy curve for varying number of estimators responds slower with the change, so I ended up not keeping that in and resorting to the original data for avg dist. You can see this in the below graphs.
+With no other feature modification, I ran a test of random forest and got a ~.776 accuracy score. To get a sense of how good my model was and get a sense of the ideal number of estimators I used accuracy score over a range of n_estimators (10 to 300 in increments of 10).
+
+![first run](https://raw.githubusercontent.com/claireramming/Springboard-Mini-Projects/master/ultimate_challenge/imgs/avg_rating_normal_avg_dist_normal.png)
+
+I then looked at the most important features (using the `feature_importances_` attribute from sklearn) and found that the top three features were Avg Distance, Average rating by driver, and weekday percentage. 
+
+I decided to focus on modifying these features to see if I could get an improvement in accuracy. Average rating by driver was particularly heavy in the 4.7-5 range, so I decided to cube that metric to give it some breathing room. That seemed to push the accuracy in the higher n_estimator range (>150) close to .780. I attempted to do a similar method with average distance, taking the log instead since the data leaned toward the lower end (less rides). Taking the log did not seem to help model performance, the accuracy curve for varying number of estimators responds slower with the change, so I ended up not keeping that in and resorting to the original data for avg dist. You can see this in the below graphs.
+
+![first run](https://raw.githubusercontent.com/claireramming/Springboard-Mini-Projects/master/ultimate_challenge/imgs/rating_changed_dist_normal.png)
+![first run](https://raw.githubusercontent.com/claireramming/Springboard-Mini-Projects/master/ultimate_challenge/imgs/rating_changed_dist_changed.png)
 
 I used accuracy to get a good sense of how my model was doing, but the false positive rate is also an important metric for this case. We want to focus on the true negatives and false positives, a negative indicates a user will most likely not be retained, we want to limit our false positives, since we will be focusing our efforts on getting any predicted negatives to stay. False negatives are not as important since any effort we make will only increase their chances of sticking around, even if it is most likely that they were going to anyway. Here is the confusion matrix from the original model with no feature changes:  
 
 	[8069, 1454]  
 	[1906, 3571]    
 
-Here is the confusion matrix from the model with the avg rating by driver cubed:
+Here is the confusion matrix from the model with the avg rating by driver cubed (no change to avg distance):
 
 	[8087, 1436]  
 	[1885, 3592]
 
 A small improvement (took the false positive rate from .152 to .151), but still an improvement.
 
-Now that we have a model, Ultimate can use this to increase their retainment rate. Users predicted negative could receive special offers that may convince them to stay. Even though the model did not measure it as most important, King's Landing is the only city with more users retained then lost, so focusing on that city for further analysis to see where other cities could improve and/or targeting discounts to predicted negatives in those cities could also be a next step for ultimate. 
+Now that we have a model, Ultimate can use this to increase their retainment rate. Users predicted negative could receive special offers that may convince them to stay. Even though the model did not measure it as most important, King's Landing is the only city with more users retained then lost, so focusing on that city for further analysis to see where other cities could improve and/or targeting discounts to predicted negatives in those cities could also be a next step for ultimate. Finally, there are a lot less android users than iphone users, and android users have a much lower retention rate. This may indicate the android application has bugs or UI issues. 
  
 
