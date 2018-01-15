@@ -118,22 +118,28 @@ With no other feature modification, I ran a test of random forest and got a ~.77
 
 I then looked at the most important features (using the `feature_importances_` attribute from sklearn) and found that the top three features were Avg Distance, Average rating by driver, and weekday percentage. 
 
-I decided to focus on modifying these features to see if I could get an improvement in accuracy. Average rating by driver was particularly heavy in the 4.7-5 range, so I decided to cube that metric to give it some breathing room. That seemed to push the accuracy in the higher n_estimator range (>150) close to .780. I attempted to do a similar method with average distance, taking the log instead since the data leaned toward the lower end (less rides). Taking the log did not seem to help model performance, the accuracy curve for varying number of estimators responds slower with the change, so I ended up not keeping that in and resorting to the original data for avg dist. You can see this in the below graphs.
+I decided to focus on modifying these features to see if I could get an improvement in accuracy. Average rating by driver was particularly heavy in the 4.7-5 range, so I decided to cube that metric to give it some breathing room. That seemed to push the accuracy in the higher n_estimator range (>150) close to .780. I attempted to do a similar method with average distance, taking the log instead since the data leaned toward the lower end (less rides). Taking the log improved the accuracy in the same way. The two together resulted in the accuracy curve for varying number of estimators responding slower with the change.
 
-![first run](https://raw.githubusercontent.com/claireramming/Springboard-Mini-Projects/master/ultimate_challenge/imgs/rating_changed_dist_normal.png)
-![first run](https://raw.githubusercontent.com/claireramming/Springboard-Mini-Projects/master/ultimate_challenge/imgs/rating_changed_dist_changed.png)
+![change rating](https://raw.githubusercontent.com/claireramming/Springboard-Mini-Projects/master/ultimate_challenge/imgs/rating_changed_dist_normal.png)
+![change dist](https://raw.githubusercontent.com/claireramming/Springboard-Mini-Projects/master/ultimate_challenge/imgs/rating_normal_dist_changed.png)
+![change both](https://raw.githubusercontent.com/claireramming/Springboard-Mini-Projects/master/ultimate_challenge/imgs/rating_changed_dist_changed.png)
 
-I used accuracy to get a good sense of how my model was doing, but the false positive rate is also an important metric for this case. We want to focus on the true negatives and false positives, a negative indicates a user will most likely not be retained, we want to limit our false positives, since we will be focusing our efforts on getting any predicted negatives to stay. False negatives are not as important since any effort we make will only increase their chances of sticking around, even if it is most likely that they were going to anyway. Here is the confusion matrix from the original model with no feature changes:  
+I used accuracy to get a good sense of how my model was doing, but the false positive rate is also an important metric for this case, and was the deciding factor in which feature change to keep since both together did not lead to the best improvement. We want to focus on the true negatives and false positives, a negative indicates a user will most likely not be retained, we want to limit our false positives, since we will be focusing our efforts on getting any predicted negatives to stay. False negatives are not as important since any effort we make will only increase their chances of sticking around, even if it is most likely that they were going to anyway. Here is the confusion matrix from the original model with no feature changes. The accuracy score is .7778, the false positive rate is .152:  
 
 	[8069, 1454]  
 	[1906, 3571]    
 
-Here is the confusion matrix from the model with the avg rating by driver cubed (no change to avg distance):
+Here is the confusion matrix from the model with the avg rating by driver cubed (no change to avg distance). Accuracy score is .7786, false positive rate is .151:
 
 	[8087, 1436]  
 	[1885, 3592]
 
-A small improvement (took the false positive rate from .152 to .151), but still an improvement.
+Here is the confusion matrix from the model with the log of avg distange. 
+
+	[8096, 1427]
+	[1916, 3561]
+
+This model affects the false positives and true negatives more, but still gives a slightly lower accuracy (.7771) than both previous models, but a lower false positive rate (.1498), so this is the final model (n_estimators set to 150). 
 
 Now that we have a model, Ultimate can use this to increase their retainment rate. Users predicted negative could receive special offers that may convince them to stay. Even though the model did not measure it as most important, King's Landing is the only city with more users retained then lost, so focusing on that city for further analysis to see where other cities could improve and/or targeting discounts to predicted negatives in those cities could also be a next step for ultimate. Finally, there are a lot less android users than iphone users, and android users have a much lower retention rate. This may indicate the android application has bugs or UI issues. 
  
