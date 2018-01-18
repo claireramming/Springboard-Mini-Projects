@@ -1,5 +1,6 @@
 # Springboard-Mini-Projects  
 This repository contains all completed mini-projects from the springboard curriculum. Each project contains a readme describing the individual project in more detail.  
+
 Projects include:  
 * Inferential Statistics  
 * Pandas  
