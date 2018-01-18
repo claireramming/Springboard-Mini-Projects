@@ -25,11 +25,15 @@ The day with the highest login count (4/4/1970, which is a Saturday) also takes 
     1970-04-04 01:45:00           56
     1970-03-13 22:15:00           55
 
+This data seems to show two things, first that there is a weekly trend, with the least logins happening on Monday and increasing from there throughout the  week,starting over the next Monday. Also, there is an overall increase in logins as the year progresses, although the data seems to start trending down again after that first week in April. 
+
 Next I wanted to find the daily trends, so I pulled the time, month and day of month into their own columns, and plotted each day on top of eachother.  
 ![Daily Cycle of Logins](https://raw.githubusercontent.com/claireramming/Springboard-Mini-Projects/master/ultimate_challenge/imgs/dailycycle.png)
 
 There is a clear login peak around noon and another leading up to midnight. There is also somewhat of an early morning peak, maybe this is where weekends get ahead in login counts. I decided to confirm this by aggregating the data into 3 hour chunks and plotting the 3am-6am chuck by day. I only chose to plot one month here, but you can clearly see 2-day peaks that correspond with weekends (recall Jan 1st was a thursday, so Jan 3/4 are weekends).  
 ![Early Morning Logins](https://raw.githubusercontent.com/claireramming/Springboard-Mini-Projects/master/ultimate_challenge/imgs/earlylogins.png)
+
+Clearly this is a popular system on early weekends, perhaps it's a gaming site or social networking that people check during lunch, at night, and when they get home after a weekend night out. Takeaways from this data could be to make sure the servers have extra capacity early on weekends, and maybe look into why things seem to be dropping in April after steadily increasing before then. 
 
 ### Part 2 - Experiment and Metrics Design
 
@@ -39,23 +43,25 @@ _However, a toll bridge, with a two-way toll, between the two cities causes driv
 
 _1. What would you choose as the key measure of success of this experiment in encouraging driver partners to serve both cities, and why would you choose this metric?_
 
- The key meausure for this experiment would be toll usage. Due to the circadian rhythms of the city affecting   activity during the week, we'd want to track which toll is being used (into gotham or into metro), the day, and time  of day. 
+ The key meausure for this experiment could be bridge use. Due to the circadian rhythms of the city affecting   activity during the week, we'd want to track how it is being crossed (into gotham or into metro), the day, and time  of day. 
   
 _2. Describe a practical experiment you would design to compare the effectiveness of the proposed change in relation to the key measure of success. Please provide details on:_  
  _a. how you will implement the experiment_  
  
- Track toll-bridge usage, and we'd expect to see an increase in toll-bridge use.  
+Trial the reimbursed tolls in one city for two months, the other will be the control group. Track bridge use, we should see an increase in crossings from whichever city the trial is in, but not the other. Two months should give us enough data.  
  
  _b. what statistical test(s) you will conduct to verify the significance of the observation_  
  
- If we have previous data, and we track this over several months, then we can do some bootstrap tests to see if there is a significant increase in toll usage in three areas:  
+Since we have a control city, we should see less crossings from that city. We should be able to do a t-test to compare bridge-crossings per day between cities. The key times to check are:  
  1. During the Day into Metropolis  
  2. During the night into Gotham  
- 3. weekends in general for both toll directions
+ 3. weekends in general for both bridge directions
+
+If we give Metropolis the trial, I'd expect to at least see a statistically significant increase in mean # of crossings during the night into Gotham, and ideally also on weekends.
    
  _c. how you would interpret the results and provide recommendations to the city operations team along with any caveats._
    
- If we are not seeing an increase in any area, then the system isn't working at all. If we are seing an increase during the week for either toll then we know at least drivers are no longer discouraged from being available when the cities are most busy. If there is no uptick on the weekends this may mean they are just busy enough in their own city that they don't need to cross, which may be fine. If we see an increase in all areas, then the plan seems to be working. Since we are only tracking toll usage, this could mean personal cars are using the tolls more frequently, we'd either need a way to only look at taxis, or cross-reference with the toll reimbursements.
+ If we are not seeing an increase in any area, then the system isn't working at all. If we are seing an increase during the week for either toll then we know at least drivers are no longer discouraged from being available when the cities are most busy. If there is no uptick on the weekends this may mean they are just busy enough in their own city that they don't need to cross, which may be fine. If we see an increase in all areas, then the plan seems to be working. Since we are only bridge crossings, not specific to taxis, this could mean personal cars are using the bridge more frequently, we'd either need a way to only look at taxis, or cross-reference with the toll reimbursements.
  
 ### Part 3 - Predictive Modeling
  
